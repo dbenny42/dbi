@@ -30,13 +30,13 @@ float code(float *arr,int *arr2){
 
   /* i counts the number of basic terms */
   while(arr[i] <= 1) {
-    i++; /* i总基本项个数 */
+    i++; /* i is the total number of basic terms */
   }
 
   /* k is total possible combinations */
   while (j < i) {
     k*=2; j++;
-  } //k为总的组合数
+  } //k is the total number of permutations
 
   struct {
     int b, L, R;
@@ -68,7 +68,7 @@ float code(float *arr,int *arr2){
 
       l++;
       q*=arr[k-n-1];
-    }//l为该j值下到基本项数，j从1到k
+    }//l is the number of basic terms under the condition of j,where j ranges from 1 to k-1
 
     qq=q;
 
@@ -114,7 +114,7 @@ float code(float *arr,int *arr2){
       }
       
       l++;
-      q*=arr[k-n-1];
+      p2*=arr[k-n-1];
     }
 
     fcost2 = (l * arr2[0]) + ((l - 1) * arr2[2]) + l * (arr2[5] + arr2[1]);
@@ -149,7 +149,7 @@ float code(float *arr,int *arr2){
           continue;
         }
         l++;
-        q *= arr[k-n-1];
+        p1 *= arr[k-n-1];
       }
 
       fcost1 = (l * arr2[0])+ ((l - 1) * arr2[2]) + (l * arr2[5]) + (arr2[1]);
