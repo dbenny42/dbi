@@ -5,207 +5,56 @@
 
 #include "project2.h"
 
-float code(float *arr, int *arr2){
+/*
+ * where num_basic_terms is set from the number of filters gained from
+ * this run...
+ *
+ *
+ * sc is the machine configuration file parsed out by main, and sels is a
+ * slice of the selectivities array--a single run's filters.
+ *
+ * in Shimao's code, this is set by incrementing i.
+ */
 
-  int flag = 0;
-  int a = 0; 
-  int g = 0; 
-  int h = 0; 
-  int i = 0;
-  int j = 0;
-  int k = 1;
-  int l = 0; 
-  int m = 0;
-  int n = 0;
-  int p = 0;
-  int fcost1 = 0;
-  int fcost2 = 0;
-  int r[10] = {0};
-  int s[10] = {0};
-  int t[10] = {0};
+float compute_best_plan(int num_basic_terms, struct sel_conf *sc, sels[NUM_FILTERS])
+{
+  int subset_idx;
+  long num_subsets = 2 ** num_basic_terms;
 
-  float q = 1;
-  float qq = 0;
-  float p1 = 1;
-  float p2 = 1;
-  float b = 0;
+  /* first, we set up an empty array of the subset state structs. */
+  /* in Shimao's code, this is set by multiplying k again and again while
+     incrementing j */
+  /* 'plans' is the array that we'll use to store plans of increasing
+     size. */
+  struct subset_state plans[num_subsets];
 
-  /* i counts the number of basic terms */
-  while (arr[i] <= 1) {
-    i++; /* i总基本项个数 */
+
+  /* the low-order 9 bits (at most) of the basic_term_bm are used to
+     indicate which basic terms are a part of a plan (of some size) stored
+     in 'plans' */
+  short basic_term_bm = 0; /* 16 bits is more than enough; we need a maximum of 9 */
+  /* the integral representation of basic_term_bm becomes the index into
+     plans where that particular subset's cost information is stored. */
+
+
+
+  /* generate the cost of the (2^(num_basic_terms) - 1) &-only plans.  for
+     each plan, check if the no-branch plan is more effective, then store
+     that cost with the no-branch flag set if the cost is better. */ 
+
+  /* we start the idx at 1 because we need non-empty subsets. */
+  for (subset_idx = 1; subset_idx < num_subsets; subset_idx++) {
+    /* look at page 12 for cost of evaluating &-plans... */
+    float cost = compute_bw_and_cost();
+    float no_branch_cost = compute_no_branch_cost();
+    if (no_branch_cost < cost) {
+      /* make appropriate adjustments */
+    }
+    
   }
 
-  /* k is total possible combinations */
-  while (j < i) {
-    k*=2; j++;
-  } //k为总的组合数
-
-  struct {
-    int b, L, R;
-    float c;
-  } A[k];
   
-  for (j = 1; j < k; j++) {
-    A[j].b = 0;
-    A[j].L = 0;
-    A[j].R = 0;
-
-    h = k / 2;
-    g = j;
-    while (h > 0) {
-      if(g >= h) {
-        g %= h;
-        s[m] = 1;
-        m++;
-      } else{
-        s[m]=0;m++;
-      }
-      h /= 2;
-    }
-
-    for (n = 0; n < 10; n++) {
-      if (s[n]==0) {
-        continue;
-      }
-
-      l++;
-      q*=arr[k-n-1];
-    }//l为该j值下到基本项数，j从1到k
-
-    qq=q;
-
-    if (q > .5) {
-      q = (1 - q);
-    }
-    /* the above if-statement replaces this: */
-    /* q= (q > 0.5) ? (1 - q) : q; */
-
-    A[j].c = l * arr2[0] + (l-1) *arr2[2] + l * arr2[5] + arr2[1] + arr2[3] * q + arr2[4] * qq;
-    if (arr2[4] < (arr2[1] + arr2[3] * q + arr2[4] * qq)) {
-      A[j].c = l * arr2[0] + (l-1) * arr2[2] + l * arr2[5] + arr2[4];
-      A[j].b=1;
-    }
-
-    // printf("%.2f ",A[j].c);
-    l=0;
-    m=0;
-    n=0;
-  } /* end for (j = 1...) */
-
-  for (j = 1; j < k - 1; j++) {
-    h = k / 2;
-    g = j;
-
-    while (h > 0) {
-
-      if (g >= h) {
-        g%=h;
-        r[m]=1;
-        m++;
-      } else {
-        r[m]=0;
-        m++;
-      }
-
-      h /= 2;
-    }
-
-    for (n = 0; n < 10; n++) {
-      if(r[n]==0) {
-        continue;
-      }
-      
-      l++;
-      q*=arr[k-n-1];
-    }
-
-    fcost2 = (l * arr2[0]) + ((l - 1) * arr2[2]) + l * (arr2[5] + arr2[1]);
-
-    m=0;
-    n=0;
-    l=0;
-
-    for(p=1; p < k - 1; p++) {
-      h=k/2;
-      g=p;
-
-      while (h > 0) {
-        if (g >= h) {
-          g %= h;
-          t[m]=1;
-          m++;
-        } else {
-          t[m]=0;
-          m++;
-        }
-
-        h /= 2;
-      }
-
-      m=0;
-      n=0;
-      l=0;
-
-      for (n=0; n < 10; n++) {
-        if (t[n] == 0) {
-          continue;
-        }
-        l++;
-        q *= arr[k-n-1];
-      }
-
-      fcost1 = (l * arr2[0])+ ((l - 1) * arr2[2]) + (l * arr2[5]) + (arr2[1]);
-
-      // printf("l=%d,fcost1=%d ",l,fcost1);
-
-      if (p1 > .5) {
-        b = 1 - p1;
-      } else {
-        b = p1;
-      }
-      /* the above if replaces this: */
-      /* b = (p1 > 0.5)?(1-p1):p1;*/
-
-      for(a=0;a<i;a++) {
-        if ((r[a] == 1) && (t[a] == 1)) {
-          flag=1;
-        }
-        break;
-      }
-
-      if( flag == 1) {
-        flag=0;
-        continue;
-      } else if ((p2 <= p1) && ((fcost2 - fcost1 + p2 * fcost1 - p1 * fcost2) < 0)) {
-        continue;
-      } else if (((p1 <= 0.5) && (p2 < p1)) && (fcost2 < fcost1)) {
-        continue;
-      } else if ((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c) {
-        A[j+p].c=fcost1+arr2[3]*b+p1*A[j].c;
-        A[j+p].L=p;
-        A[j+p].R=j;
-      }
-    }
-  }
-
-  m=0;
-  n=0;
-  l=0;
-  printf("%d,%d,%d,%f", A[k-1].L, A[k-1].R, A[k-1].b, A[k-1].c);
-
-  printf("for(i=0;i<LOOP;i++){\n");
-  if((A[k-1].L == 0) && (A[k-1].b == 0)) {
-    printf("if(f1(r1[i])");
-    for(m = 2; m <= i; m++) {
-      printf("&f%d(r%d[i])",m,m);
-    }
-
-    printf(")\n");
-    printf("{answer[j++]=i;}\n}");
-  }
-
-  return A[k-1].c;
-
+    
 } 
 
 
@@ -345,7 +194,7 @@ int main(int argc, char * argv[])
   printf("conf a: %d\n", sc.a);
   printf("conf f: %d\n", sc.f);
 
-  /* x = code(arr[1],arr2); */
+  /* x = compute_best_plan(arr[1],arr2); */
   /* printf("%.2f\n",x); */
   /* printf("===================================================\n"); */
 
@@ -358,7 +207,7 @@ int main(int argc, char * argv[])
   /*   } */
 
   /*   printf("\n---------------------------------------------------\n"); */
-  /*   /\*x = code(arr[m],arr2);*\/ */
+  /*   /\*x = compute_best_plan(arr[m],arr2);*\/ */
   /*   printf("\n\n\n\n\n"); */
   /*   printf("---------------------------------------------------\n"); */
   /*   printf("cost:%.2f\n", x); */
