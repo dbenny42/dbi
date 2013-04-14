@@ -30,16 +30,16 @@ float code(float *arr,int *arr2){
 
   /* i counts the number of basic terms */
   while(arr[i] <= 1) {
-    i++; /* i总基本项个数 */
+    i++; /* i is the total number of basic terms */
   }
 
   /* k is total possible combinations */
   while (j < i) {
     k*=2; j++;
-  } //k为总的组合数
+  } //k is the total number of permutations
 
   struct {
-    int b, L, R;
+    int b, L, R, flag;
     float c;
   } A[k];
   
@@ -47,6 +47,7 @@ float code(float *arr,int *arr2){
     A[j].b = 0;
     A[j].L = 0;
     A[j].R = 0;
+    A[j].flag=0;
 
     h = k / 2;
     g = j;
@@ -62,13 +63,10 @@ float code(float *arr,int *arr2){
     }
 
     for (n = 0; n < 10; n++) {
-      if (s[n]==0) {
-        continue;
-      }
-
+      if (s[n]==1) {
       l++;
-      q*=arr[k-n-1];
-    }//l为该j值下到基本项数，j从1到k
+      q*=arr[i-n];}
+    }//l is the number of basic terms under the condition of j,where j ranges from 1 to k-1
 
     qq=q;
 
@@ -109,12 +107,9 @@ float code(float *arr,int *arr2){
     }
 
     for (n = 0; n < 10; n++) {
-      if(r[n]==0) {
-        continue;
-      }
-      
+      if(r[n]==1) {
       l++;
-      q*=arr[k-n-1];
+      p2*=arr[i-n];}
     }
 
     fcost2 = (l * arr2[0]) + ((l - 1) * arr2[2]) + l * (arr2[5] + arr2[1]);
@@ -145,14 +140,14 @@ float code(float *arr,int *arr2){
       l=0;
 
       for (n=0; n < 10; n++) {
-        if (t[n] == 0) {
-          continue;
-        }
+        if (t[n] == 1) {
         l++;
-        q *= arr[k-n-1];
+        p1 *= arr[i-n];
+      }
       }
 
       fcost1 = (l * arr2[0])+ ((l - 1) * arr2[2]) + (l * arr2[5]) + (arr2[1]);
+      l=0;
 
       // printf("l=%d,fcost1=%d ",l,fcost1);
 
@@ -178,18 +173,21 @@ float code(float *arr,int *arr2){
         continue;
       } else if (((p1 <= 0.5) && (p2 < p1)) && (fcost2 < fcost1)) {
         continue;
-      } else if ((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c) {
+      } else if ((((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c)&&(A[p].flag==1)&&(A[p].R==0))
+                ||(((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c)&&(A[p].R!=0)&&(A[A[p].R].flag==1))) {
         A[j+p].c=fcost1+arr2[3]*b+p1*A[j].c;
         A[j+p].L=p;
         A[j+p].R=j;
       }
+      p1=1;
     }
+    p2=1;
   }
 
   m=0;
   n=0;
   l=0;
-  printf("%d,%d,%d,%f", A[k-1].L, A[k-1].R, A[k-1].b, A[k-1].c);
+  //printf("%d,%d,%d,%f", A[k-1].L, A[k-1].R, A[k-1].b, A[k-1].c);
 
   printf("for(i=0;i<LOOP;i++){\n");
   if((A[k-1].L == 0) && (A[k-1].b == 0)) {
@@ -248,12 +246,12 @@ int main(int argc, char * argv[]) {
     j=0;
   }
 
-  for( m = 0; m < line; m++){
+  /*for( m = 0; m < line; m++){
     for(n = 0; n < 10; n++){
       printf("%.2f ",arr[m][n]);
     }
     printf("\n");
-  }
+  }*/
   fclose(fp;)
 
   fp = fopen(argv[2],"r");
@@ -268,11 +266,11 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  for ( m=0; m < 6; m++) {
+  /*for ( m=0; m < 6; m++) {
     printf("%d ",arr2[m]);
-  }
+  }*/
 
-  puts("\n"); /* what is this here for?  why use puts? */
+  //puts("\n"); /* what is this here for?  why use puts? */
 
   fclose(fp);
 
