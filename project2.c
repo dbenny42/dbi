@@ -173,7 +173,8 @@ float code(float *arr,int *arr2){
         continue;
       } else if (((p1 <= 0.5) && (p2 < p1)) && (fcost2 < fcost1)) {
         continue;
-      } else if (((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c)&&A[p].flag==1) {
+      } else if ((((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c)&&(A[p].flag==1)&&(A[p].R==0))
+                ||(((fcost1 + arr2[3] * b + p1 * A[j].c) < A[j + p].c)&&(A[p].R!=0)&&(A[A[p].R].flag==1))) {
         A[j+p].c=fcost1+arr2[3]*b+p1*A[j].c;
         A[j+p].L=p;
         A[j+p].R=j;
