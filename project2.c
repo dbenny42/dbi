@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<errno.h>
+#include<strings.h> /* required for the use of ffs */
 
 #include "project2.h"
 
@@ -15,11 +16,19 @@
  *
  * in Shimao's code, this is set by incrementing i.
  */
-
-float compute_best_plan(int num_basic_terms, struct sel_conf *sc, sels[NUM_FILTERS])
+float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels[])
 {
-  int subset_idx;
-  long num_subsets = 2 ** num_basic_terms;
+  printf("--------------------------------------------------\n");
+  printf("COMPUTING A NEW BEST PLAN\n");
+  printf("--------------------------------------------------\n");
+
+  /* the low-order 9 bits (at most) of the subset_bm are used to
+     indicate which basic terms are a part of a plan (of some size) stored
+     in 'plans' */
+  int subset_bm; /* 16 bits is more than enough; we need a maximum of 9 */
+  /* the integral representation of basic_term_bm becomes the index into
+     plans where that particular subset's cost information is stored. */
+  long num_subsets = 1 << num_basic_terms; /* gives us 2 ^ num_basic_terms */
 
   /* first, we set up an empty array of the subset state structs. */
   /* in Shimao's code, this is set by multiplying k again and again while
@@ -29,34 +38,161 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, sels[NUM_FILTE
   struct subset_state plans[num_subsets];
 
 
-  /* the low-order 9 bits (at most) of the basic_term_bm are used to
-     indicate which basic terms are a part of a plan (of some size) stored
-     in 'plans' */
-  short basic_term_bm = 0; /* 16 bits is more than enough; we need a maximum of 9 */
-  /* the integral representation of basic_term_bm becomes the index into
-     plans where that particular subset's cost information is stored. */
 
 
+  /* STAGE 1:
 
-  /* generate the cost of the (2^(num_basic_terms) - 1) &-only plans.  for
-     each plan, check if the no-branch plan is more effective, then store
-     that cost with the no-branch flag set if the cost is better. */ 
+     Generate the cost of the (2^(num_basic_terms) - 1) &-only
+     plans.  for each plan, check if the no-branch plan is more effective,
+     then store that cost with the no-branch flag set if the cost is
+     better. */ 
 
   /* we start the idx at 1 because we need non-empty subsets. */
-  for (subset_idx = 1; subset_idx < num_subsets; subset_idx++) {
-    /* look at page 12 for cost of evaluating &-plans... */
-    float cost = compute_bw_and_cost();
-    float no_branch_cost = compute_no_branch_cost();
-    if (no_branch_cost < cost) {
-      /* make appropriate adjustments */
+  for (subset_bm = 1; subset_bm < num_subsets; subset_bm++) {
+
+    printf("the current bm index is %d\n", subset_bm);
+    /* build a subset state for this subset index; place it in the
+       array. */
+    struct subset_state ss;
+    init_subset_state(&ss);
+
+    float curr_sels[MAX_FILTERS] = {SENTINEL};
+    printf("made it this far.\n");
+    /* build the associated struct subset_state */
+    ss.num_basic_terms = build_set(subset_bm, curr_sels, all_sels);
+
+    printf("past the build_set() call.\n");
+    printf("the number of basic terms is %d\n", ss.num_basic_terms);
+
+    /* set the ss.sel_prod */
+    int idx;
+    for (idx = 0; idx < ss.num_basic_terms; idx++) {
+      ss.sel_prod *= curr_sels[idx];
     }
-    
+    printf("MADE IT THIS FAR.\n");
+    /* look at page 12 for cost of evaluating &-plans... */
+    ss.best_cost = compute_logicaland_cost(&ss, curr_sels, sc);
+    float no_branch_cost = compute_nobranch_cost(ss.num_basic_terms,
+                                                 curr_sels,
+                                                 sc);
+    if (no_branch_cost < ss.best_cost) {
+      /* make appropriate adjustments */
+      ss.best_cost = no_branch_cost;
+      ss.no_branch = 1;
+    }
+
+    /* lastly, actually store the subset results. */
+    plans[subset_bm] = ss;
   }
 
-  
-    
-} 
+  return SENTINEL; /* until we actually finish this cost generation. */
+}
 
+void init_subset_state(struct subset_state *ss)
+{
+  ss->num_basic_terms = 0;
+  ss->sel_prod = 0;
+  ss->no_branch = 0;
+  ss->best_cost = 0;
+  ss->left_child = 0;
+  ss->right_child = 0;
+}
+
+/* bm is the actual set bitmap */
+int build_set(short bm, float curr_sels[], float all_sels[])
+{
+  int bit_idx = 0;
+  int curr_sels_idx = 0;
+  while (bm) { /* so long as there are high bits in the bm */
+    printf("bm: %d\n", bm);
+    printf("checking out another bit.\n");
+    if (bm & 1) { /* if lowest bit is 1. */
+      printf("found a high bit.\n");
+      curr_sels[curr_sels_idx++] = all_sels[bit_idx];
+    }
+    bit_idx++;
+    bm >>= 1; /* set up to look at next bit */
+  }
+
+  return curr_sels_idx; /* doubles as the number of high bits found */
+}
+
+
+
+/* begin auxiliaries */
+
+float sum_array(int len, float values[])
+{
+  int i;
+  float sum = 0;
+  for (i = 0; i < len; i++) {
+    sum += values[i];
+  }
+  return sum;
+}
+
+float find_q(float p)
+{
+  return ((p > .5) ? (1 - p) : p);
+}
+
+
+
+
+
+
+
+
+/* end auxiliaries; start cost fns. */
+
+/* compute_plan_fixed_cost and compute_nobranch_cost are essentially the
+   same; both make use of fixed_cost_helper() */
+float fixed_cost_helper(int num_basic_terms,
+                        struct sel_conf *sc,
+                        float sels[])
+{
+  return ((num_basic_terms * sc->r) +
+          ((num_basic_terms - 1) * sc->l) +
+          sum_array(num_basic_terms, sels));
+}
+
+float compute_plan_fixed_cost(int num_basic_terms,
+                              struct sel_conf *sc,
+                              float sels[])
+{
+  return (fixed_cost_helper(num_basic_terms, sc, sels) +
+          sc->t);
+}
+
+float compute_nobranch_cost(int num_basic_terms,
+                            float sels[],
+                            struct sel_conf *sc)
+{
+  return (fixed_cost_helper(num_basic_terms, sc, sels) +
+          sc->a);
+}
+
+float compute_logicaland_cost(struct subset_state *ss,
+                              float sels[],
+                              struct sel_conf *sc)
+{
+  return (compute_plan_fixed_cost(ss->num_basic_terms, sc, sels) +
+          (sc->m * (find_q(ss->sel_prod))) +
+          (ss->sel_prod * sc->a));
+}
+
+/* end cost fns */
+
+
+
+
+
+
+
+
+/**************************************************
+Here begins the parsing fns and main.
+ **************************************************/
 
 /* 
  * in: the filename and the empty array of selectivities (to be filled)
@@ -111,10 +247,10 @@ int parse_config_line(FILE *fp)
     printf("fgets returned null; something is wrong with our assumption about the config file format.");
     exit(1); /* no point continuing if we were wrong about the format... */
   }
-  printf("the line is %s\n", buf);
+
   tok = strtok(buf, "= ");
   tok = strtok(NULL, "= ");
-  printf("the tok is %s\n", tok);
+
   return atoi(tok);
 }
 
@@ -173,28 +309,31 @@ int main(int argc, char * argv[])
   parse_config_file(argv[2], &sc);
 
   /* test the parsers: */
-  printf("the number of runs: %d\n", num_runs);
-  printf("==================================================\n");
-  int i, j;
-  j = 0;
-  for (i = 0; i < num_runs; i++) {
-    while ((selectivities[i][j] != -99) && (j < MAX_FILTERS)) {
-      printf("%.2f ", selectivities[i][j]);
-      j++;
-    }
-    printf("\n");
-    j = 0;
-  }
+  /* printf("the number of runs: %d\n", num_runs); */
+  /* printf("==================================================\n"); */
+  /* int i, j; */
+  /* j = 0; */
+  /* for (i = 0; i < num_runs; i++) { */
+  /*   while ((selectivities[i][j] != -99) && (j < MAX_FILTERS)) { */
+  /*     printf("%.2f ", selectivities[i][j]); */
+  /*     j++; */
+  /*   } */
+  /*   printf("\n"); */
+  /*   j = 0; */
+  /* } */
 
-  printf("==================================================\n");
-  printf("conf r: %d\n", sc.r);
-  printf("conf t: %d\n", sc.t);
-  printf("conf l: %d\n", sc.l);
-  printf("conf m: %d\n", sc.m);
-  printf("conf a: %d\n", sc.a);
-  printf("conf f: %d\n", sc.f);
+  /* printf("==================================================\n"); */
+  /* printf("conf r: %d\n", sc.r); */
+  /* printf("conf t: %d\n", sc.t); */
+  /* printf("conf l: %d\n", sc.l); */
+  /* printf("conf m: %d\n", sc.m); */
+  /* printf("conf a: %d\n", sc.a); */
+  /* printf("conf f: %d\n", sc.f); */
 
-  /* x = compute_best_plan(arr[1],arr2); */
+  /* TODO: add a for-loop here to do each run. */
+  float x = compute_best_plan(2, &sc, selectivities[0]);
+
+
   /* printf("%.2f\n",x); */
   /* printf("===================================================\n"); */
 
