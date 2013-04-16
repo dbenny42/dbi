@@ -112,8 +112,8 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
   short s1_idx;
   short s2_idx;
   for (s1_idx = 1; s1_idx < num_subsets; s1_idx++) {
-    for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) {
-
+    /*for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) {*/
+    for (s2_idx = s1_idx + 1; s2_idx < num_subsets; s2_idx++) {
       /* continue only if the intersection is empty */
       if ((s2_idx & s1_idx) == 0) {
         if (lemma_four_eight(plans, &plans[s1_idx], &plans[s2_idx])) {
@@ -127,7 +127,13 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
                             (find_q(plans[s2_idx].sel_prod) * sc->m) +
                             (plans[s2_idx].sel_prod * plans[s1_idx].best_cost));
           short s1_union_s2 = s1_idx | s2_idx;
+
           if (new_cost < plans[s1_union_s2].best_cost) {
+            printf("***\n");
+            printf("s1_union_s2 is %d\n", s1_union_s2);
+            printf("s1_idx is %d\n", s1_idx);
+            printf("s2_idx is %d\n", s2_idx);
+
             /* replace A[s' U s].c with c */
             plans[s1_union_s2].best_cost = new_cost;
             /* replace A[s' U s].L with s'. */
@@ -146,20 +152,75 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 
   /* NEXT STEP: */
   /* recursively print out the plan */
+  printf("if (");
+  print_plan(plans, num_subsets - 1);
+  printf(") {\n");
 
+  printf("------------------------------------------------------------------------------------------\n");
+  printf("cost: %f\n", plans[num_subsets - 1].best_cost);
+  printf("==========================================================================================\n");
 
-
-
-
-
-
-    printf("------------------------------------------------------------------------------------------\n");
-    printf("cost: %f\n", plans[num_subsets - 1].best_cost);
-    printf("==========================================================================================\n");
-
-    printf("\n\n\n");
+  printf("\n\n\n");
   return plans[num_subsets - 1].best_cost;
 }
+
+
+void print_plan(struct subset_state plans[], int curr_subset)
+{
+  /* TODO: wrap the inner printing with an if-statement */
+  print_plan_loop(plans, curr_subset);
+}
+
+/* TODO: handle no-branch option. */
+void print_plan_loop(struct subset_state plans[], int curr_subset)
+{
+  /*printf("the current subset is %d\n", curr_subset);*/
+  short left_child = plans[curr_subset].left_child;
+
+  /* handle left side */
+
+  if (left_child) {
+    /* recurse */
+    print_plan_loop(plans, left_child);
+    print_logical_term(left_child);
+
+    printf(" && "); /* join the two sides together */
+  }
+
+
+
+  /* handle right side. */
+  short right_child = plans[curr_subset].right_child;
+  if (right_child) {
+    /* recurse */
+    print_plan_loop(plans, right_child);
+    print_logical_term(right_child);
+  }
+
+}
+
+void print_logical_term(short subset_bm)
+{
+  printf("(");
+  int curr_bit = 0;
+  int needs_ampersand = 0;
+
+  while (subset_bm) {
+    if (subset_bm & 1) {
+      if (!needs_ampersand) {
+        printf("t%d[o%d[i]]", curr_bit, curr_bit);
+        needs_ampersand = 1; /* so only the first term goes without */
+      } else {
+        printf(" & t%d[o%d[i]]", curr_bit, curr_bit);
+      }
+    }
+    subset_bm >>= 1; /* get a new lowest-order bit. */
+    curr_bit++;
+  }
+
+  printf(")");
+}
+
 
 /* returns -1 if s1->cmet < s2->cmet */
 /* returns 0 if s1->cmet == s2->cmet OR no ordering is possible */
@@ -486,58 +547,15 @@ int main(int argc, char * argv[])
   parse_config_file(argv[2], &sc);
   printf("the number of runs is %d\n", num_runs);
 
-  /* test the parsers: */
-  /* printf("the number of runs: %d\n", num_runs); */
-  /* printf("==================================================\n"); */
-  /* int i, j; */
-  /* j = 0; */
-  /* for (i = 0; i < num_runs; i++) { */
-  /*   while ((selectivities[i][j] != -99) && (j < MAX_FILTERS)) { */
-  /*     printf("%.2f ", selectivities[i][j]); */
-  /*     j++; */
-  /*   } */
-  /*   printf("\n"); */
-  /*   j = 0; */
-  /* } */
-
-  /* printf("==================================================\n"); */
-  /* printf("conf r: %d\n", sc.r); */
-  /* printf("conf t: %d\n", sc.t); */
-  /* printf("conf l: %d\n", sc.l); */
-  /* printf("conf m: %d\n", sc.m); */
-  /* printf("conf a: %d\n", sc.a); */
-  /* printf("conf f: %d\n", sc.f); */
 
 
   /* perform the actaul optimization. */
   int run_idx;
-  float best_cost;
-  for (run_idx = 0; run_idx < num_runs; run_idx++) {
-    best_cost = compute_best_plan(num_filters[run_idx], &sc, selectivities[run_idx]);
-
-    /* TODO: move this into the compute_best_plan() code to isolate the
-       encapsulate the functionality there. */
-
-  }
-
-  /* printf("%.2f\n",x); */
-  /* printf("===================================================\n"); */
-
-  /* for (m = 0; m < line; m++) { */
-  /*   for(n = 0; n < 10; n++){ */
-  /*     if (arr[m][n]>1) { */
-  /*       break; */
-  /*     } */
-  /*     printf("%.2f ", arr[m][n]); */
-  /*   } */
-
-  /*   printf("\n---------------------------------------------------\n"); */
-  /*   /\*x = compute_best_plan(arr[m],arr2);*\/ */
-  /*   printf("\n\n\n\n\n"); */
-  /*   printf("---------------------------------------------------\n"); */
-  /*   printf("cost:%.2f\n", x); */
-  /*   printf("===================================================\n"); */
+  /* TODO: UNCOMMENT THIS FOR FULL RUN */
+  /* for (run_idx = 0; run_idx < num_runs; run_idx++) { */
+  /*   compute_best_plan(num_filters[run_idx], &sc, selectivities[run_idx]); */
   /* } */
+  compute_best_plan(num_filters[1], &sc, selectivities[1]);
 
   return 0;
 }

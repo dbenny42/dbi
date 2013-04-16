@@ -4,3 +4,14 @@ Code Implementation of Branch Evaluator
 
 David Benedetto djb2167
 Shimao Zheng sz2376
+
+
+
+
+THINGS THAT HAVE BEEN TESTED:
+
+- Time complexity appears to be correct; using a test that printed a line
+  for every iteration of part 2 of the algorithm, we found O(4^n) to be an
+  excellent estimation of the time complexity.
+
+- 

@@ -79,4 +79,10 @@ int parse_query_file(char *, int [], float[][MAX_FILTERS]);
 int parse_config_line(FILE *);
 void parse_config_file(char *, struct sel_conf *);
 
+
+/* printing functions */
+void print_plan(struct subset_state [], int);
+void print_plan_loop(struct subset_state [], int);
+void print_logical_term(short);
+
 #endif
