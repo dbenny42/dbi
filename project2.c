@@ -109,36 +109,36 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
   /***************************************************
    ** Stage 2
    ***************************************************/
-  /* short s1_idx; */
-  /* short s2_idx; */
-  /* for (s1_idx = 1; s1_idx < num_subsets; s1_idx++) { */
-  /*   for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) { */
+  short s1_idx;
+  short s2_idx;
+  for (s1_idx = 1; s1_idx < num_subsets; s1_idx++) {
+    for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) {
 
-  /*     /\* continue only if the intersection is empty *\/ */
-  /*     if ((s2_idx & s1_idx) == 0) { */
-  /*       if (lemma_four_eight(plans, &plans[s1_idx], &plans[s2_idx])) { */
-  /*         /\* do nothing *\/ */
-  /*       } else if (lemma_four_nine(plans, &plans[s1_idx], &plans[s2_idx])) { */
-  /*         /\* do nothing *\/ */
-  /*       } else { */
-  /*         /\* calculate cost according to eq. 1 -> c*\/ */
-  /*         /\*fcost(s') + mq + pC*\/ */
-  /*         float new_cost = ((plans[s2_idx].fixed_cost) + */
-  /*                           (find_q(plans[s2_idx].sel_prod) * sc->m) + */
-  /*                           (plans[s2_idx].sel_prod * plans[s1_idx].best_cost)); */
-  /*         short s1_union_s2 = s1_idx | s2_idx; */
-  /*         if (new_cost < plans[s1_union_s2].best_cost) { */
-  /*           /\* replace A[s' U s].c with c *\/ */
-  /*           plans[s1_union_s2].best_cost = new_cost; */
-  /*           /\* replace A[s' U s].L with s'. *\/ */
-  /*           plans[s1_union_s2].left_child = s2_idx; */
-  /*           /\* replace A[s' U s].R with s. *\/ */
-  /*           plans[s1_union_s2].right_child = s1_idx; */
-  /*         } */
-  /*       } */
-  /*     } */
-  /*   } */
-  /* } */
+      /* continue only if the intersection is empty */
+      if ((s2_idx & s1_idx) == 0) {
+        if (lemma_four_eight(plans, &plans[s1_idx], &plans[s2_idx])) {
+          /* do nothing */
+        } else if (lemma_four_nine(plans, &plans[s1_idx], &plans[s2_idx])) {
+          /* do nothing */
+        } else {
+          /* calculate cost according to eq. 1 -> c*/
+          /*fcost(s') + mq + pC*/
+          float new_cost = ((plans[s2_idx].fixed_cost) +
+                            (find_q(plans[s2_idx].sel_prod) * sc->m) +
+                            (plans[s2_idx].sel_prod * plans[s1_idx].best_cost));
+          short s1_union_s2 = s1_idx | s2_idx;
+          if (new_cost < plans[s1_union_s2].best_cost) {
+            /* replace A[s' U s].c with c */
+            plans[s1_union_s2].best_cost = new_cost;
+            /* replace A[s' U s].L with s'. */
+            plans[s1_union_s2].left_child = s2_idx;
+            /* replace A[s' U s].R with s. */
+            plans[s1_union_s2].right_child = s1_idx;
+          }
+        }
+      }
+    }
+  }
 
   /**************************************************
    ** end stage 2.
