@@ -3,7 +3,7 @@
 
 #define IN_BUFSIZE 1024 /* for reading lines from query and config
                            files. */
-#define MAX_FILTERS 9 /* according to instructions */ 
+#define MAX_FILTERS 10 /* according to instructions */ 
 #define MAX_RUNS 25 /* corresponds with lines in query file. */
 #define SENTINEL -99.0
 
@@ -25,17 +25,22 @@ struct subset_state {
               sel_prod. */
   int no_branch;
   float best_cost;
-  int left_child; /* TODO; revisit these; left_child & right_child might
-                     need to be sets. */
-  int right_child;
+  short left_child; /* short, because we're representing sets. */
+  short right_child;
+
+
+  /* the next set of fields are things that are not necessary, but we use
+     frequently enough with such little use that it makes sense to store
+     them. */
+  float fixed_cost;
 };
 
 /* plan evaluation functions */
-float compute_best_plan(int, struct sel_conf *, float []);x
+float compute_best_plan(int, struct sel_conf *, float []);
 float compute_logicaland_cost(struct subset_state *,
                               float sels[],
                               struct sel_conf *);
-float compute_plan_fixed_cost(int, struct sel_conf *, float []);
+float compute_fixed_cost(int, struct sel_conf *, float []);
 float fixed_cost_helper(int, struct sel_conf *, float []);
 float compute_nobranch_cost(int, float [], struct sel_conf *);
 
@@ -58,10 +63,19 @@ float find_q(float); /* takes p, returns q */
    space. */
 int build_set(short, float [], float []);
 
-
+int lemma_four_eight(struct subset_state [],
+                     struct subset_state *,
+                     struct subset_state *);
+int lemma_four_nine(struct subset_state [],
+                     struct subset_state *,
+                     struct subset_state *);
+int compare_cmetric(struct subset_state *,
+                     struct subset_state *);
+int compare_dmetric(struct subset_state *,
+                     struct subset_state *);
 
 /* parsing functions */
-int parse_query_file(char *, float[][MAX_FILTERS]);
+int parse_query_file(char *, int [], float[][MAX_FILTERS]);
 int parse_config_line(FILE *);
 void parse_config_file(char *, struct sel_conf *);
 
