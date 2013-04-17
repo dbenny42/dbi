@@ -20,10 +20,10 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 {
   int i;
   for (i = 0; i < num_basic_terms; i++) {
-    //("%.2f ", all_sels[i]);
+    printf("%.2f ", all_sels[i]);
   }
-  //("\n");
-  //("------------------------------------------------------------------------------------------\n");
+  printf("\n");
+  printf("------------------------------------------------------------------------------------------\n");
 
 
 
@@ -193,17 +193,18 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 
 void print_plan(struct subset_state plans[], int curr_subset)
 {
+  /* two cases: one with and one without children */
   /* no children is a special print case. */
   if (is_leaf(plans, curr_subset)) {
     if (plans[curr_subset].no_branch) {
       printf("/* no branch option */\n");
       printf("answer[j] = i;\n");
       printf("j += ");
-      print_logical_term(curr_subset);
+      print_logical_term(plans, curr_subset);
       printf("\n");
     } else {
       printf("if (");
-      print_logical_term(curr_subset);      
+      print_logical_term(plans, curr_subset);
       printf(") {\n");
       printf("\tanswer[j++] = i;\n");
       printf("}\n");
@@ -214,15 +215,18 @@ void print_plan(struct subset_state plans[], int curr_subset)
 
     /* now handle the case with children. */
     printf("if (");
-    print_plan_loop(plans, curr_subset);
+    print_plan_loop(plans, curr_subset, 0);
     /* printf(") {\n"); */
   }
+ 
+
+  /* wrap up. */
   printf("------------------------------------------------------------------------------------------\n");
   printf("cost: %f\n", plans[curr_subset].best_cost);
   printf("==========================================================================================\n");
 }
 
-void print_plan_loop(struct subset_state plans[], int curr_subset)
+void print_plan_loop(struct subset_state plans[], int curr_subset, int curr_parens)
 {
   /* printf("the current subset is %d\n", curr_subset);*/
 
@@ -231,8 +235,9 @@ void print_plan_loop(struct subset_state plans[], int curr_subset)
   /* handle left side*/
   if (left_child) {
     /* recurse*/
-    print_plan_loop(plans, left_child);
-    print_logical_term(left_child);
+    print_plan_loop(plans, left_child, curr_parens);
+    print_logical_term(plans, left_child);
+
   }
   
 
@@ -242,33 +247,45 @@ void print_plan_loop(struct subset_state plans[], int curr_subset)
     /* recurse*/
     if(!is_leaf(plans, right_child)) {
       printf(" && ");
+
+      if (plans[curr_subset].num_basic_terms > 1) {
+        printf("(");
+        curr_parens++;
+      }
     }
 
-    print_plan_loop(plans, right_child);
-
+    print_plan_loop(plans, right_child, curr_parens);
     if (is_leaf(plans, right_child)) {
       /* finish the print.*/
+      while (curr_parens > 0) {
+        printf(")");
+        curr_parens--;
+      }
       if (plans[right_child].no_branch) {
         printf(") {\n");
         printf("\tanswer[j] += i;\n");
         printf("\tj = ");
-        print_logical_term(right_child);
+        print_logical_term(plans, right_child);
         printf(";\n");
         printf("}\n");
       } else {
-        print_logical_term(right_child);
+        print_logical_term(plans, right_child);
         printf(" {\n");
         printf("\tanswer[j++] = i;\n");
         printf("}\n");
       }
-    } 
+    }
   }
 }
 
 
-void print_logical_term(short subset_bm)
+void print_logical_term(struct subset_state plans[], short subset_bm)
 {
-  printf("(");
+  short bm_copy = subset_bm;
+  if (plans[bm_copy].num_basic_terms > 1) {
+    printf("(");
+  }
+
   int curr_bit = 1;
   int needs_ampersand = 0;
 
@@ -285,7 +302,9 @@ void print_logical_term(short subset_bm)
     curr_bit++;
   }
 
-  printf(")");
+  if (plans[bm_copy].num_basic_terms > 1) {
+    printf(")");
+  }
 }
 
 int is_leaf(struct subset_state plans[], int curr_subset)
