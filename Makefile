@@ -7,7 +7,7 @@ EXES = selconds
 OBJS = project2.o
 
 
-# name doesn't matter; going to be wrapped in a shell, anyway.
+# name doesn't matter; going to be wrapped in a shell script, anyway.
 
 $(EXES): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $?
