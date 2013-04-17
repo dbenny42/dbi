@@ -18,10 +18,9 @@
  */
 float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels[])
 {
-  printf("==========================================================================================\n");
   int i;
   for (i = 0; i < num_basic_terms; i++) {
-    printf("%f ", all_sels[i]);
+    printf("%.2f ", all_sels[i]);
   }
   printf("\n");
   printf("------------------------------------------------------------------------------------------\n");
@@ -60,8 +59,9 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
      better. */ 
 
   /* we start the idx at 1 because we need non-empty subsets. */
+  //printf("PART 1\n");
   for (subset_bm = 1; subset_bm < num_subsets; subset_bm++) {
-
+    //printf("now considering subset %d\n", subset_bm);
     /* build a subset state for this subset index; place it in the
        array. */
     struct subset_state ss;
@@ -72,12 +72,14 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
     /* build the associated struct subset_state */
     ss.num_basic_terms = build_set(subset_bm, curr_sels, all_sels);
 
-
+    //printf("the basic terms are: ");
     /* set the ss.sel_prod */
     int idx;
     for (idx = 0; idx < ss.num_basic_terms; idx++) {
       ss.sel_prod *= curr_sels[idx];
+      //printf("%f, ", curr_sels[idx]);
     }
+    //printf("\n");
 
     /* TODO: optimize the way all of these initial values are set; it's
        highly inefficient right now. */
@@ -88,51 +90,73 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
                                        curr_sels);
 
 
+    //printf("the fixed cost is %f\n", ss.fixed_cost);
+
     /* look at page 12 for cost of evaluating &-plans... */
     ss.best_cost = compute_logicaland_cost(&ss, curr_sels, sc);
     float no_branch_cost = compute_nobranch_cost(ss.num_basic_terms,
                                                  curr_sels,
                                                  sc);
+    //printf("the best cost is %f\n", ss.best_cost);
+    //printf("the no branch cost is %f\n", no_branch_cost);
     if (no_branch_cost < ss.best_cost) {
       /* make appropriate adjustments */
+      //printf("adjusting for no-branch.\n");
       ss.best_cost = no_branch_cost;
       ss.no_branch = 1;
+    } else {
+      //printf("NOT adjusting for no-branch.\n");
     }
-
+        
     /* lastly, actually store the subset results. */
     plans[subset_bm] = ss;
   }
 
 
-
-
+    
+  //printf("\n\nNOW ENTERING STAGE 2\n\n");
   /***************************************************
    ** Stage 2
    ***************************************************/
   short s1_idx;
   short s2_idx;
   for (s1_idx = 1; s1_idx < num_subsets; s1_idx++) {
+    //printf("s1_idx is now set at %d\n", s1_idx);
     /*for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) {*/
     for (s2_idx = s1_idx + 1; s2_idx < num_subsets; s2_idx++) {
+      //printf("s2_idx is now set at %d\n", s2_idx);
       /* continue only if the intersection is empty */
       if ((s2_idx & s1_idx) == 0) {
+        //printf("intersection is empty; proceed.\n");
         if (lemma_four_eight(plans, &plans[s1_idx], &plans[s2_idx])) {
           /* do nothing */
+          //printf("lemma 4-8 applies.\n");
         } else if (lemma_four_nine(plans, &plans[s1_idx], &plans[s2_idx])) {
           /* do nothing */
+          //printf("lemma 4-9 applies.\n");
         } else {
           /* calculate cost according to eq. 1 -> c*/
           /*fcost(s') + mq + pC*/
           float new_cost = ((plans[s2_idx].fixed_cost) +
                             (find_q(plans[s2_idx].sel_prod) * sc->m) +
                             (plans[s2_idx].sel_prod * plans[s1_idx].best_cost));
+
+          //printf("%f\n", plans[s2_idx].fixed_cost);
+          //printf("%f\n", find_q(plans[s2_idx].sel_prod));
+          //printf("%d\n", sc->m);
+          //printf("%f\n", plans[s2_idx].sel_prod);
+          //printf("%f\n", plans[s1_idx].best_cost);
+
+          //printf("past the lemmas, checking costs.\n");
+          //printf("the new cost is %f\n", new_cost);
           short s1_union_s2 = s1_idx | s2_idx;
+          //printf("the union of s1_idx and s2_idx is %d\n", s1_union_s2);
 
           if (new_cost < plans[s1_union_s2].best_cost) {
-            printf("***\n");
-            printf("s1_union_s2 is %d\n", s1_union_s2);
-            printf("s1_idx is %d\n", s1_idx);
-            printf("s2_idx is %d\n", s2_idx);
+            //printf("NEW COST IS BETTER!\n");
+            //printf("s1_union_s2 is %d\n", s1_union_s2);
+            //printf("s1_idx is %d\n", s1_idx);
+            //printf("s2_idx is %d\n", s2_idx);
 
             /* replace A[s' U s].c with c */
             plans[s1_union_s2].best_cost = new_cost;
@@ -140,8 +164,15 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
             plans[s1_union_s2].left_child = s2_idx;
             /* replace A[s' U s].R with s. */
             plans[s1_union_s2].right_child = s1_idx;
+
+            //printf("s1_union_s2's cost is %f\n", plans[s1_union_s2].best_cost);
+            //printf("s1_union_s2's left is %d\n", plans[s1_union_s2].left_child);
+            //printf("s1_union_s2's right is %d\n", plans[s1_union_s2].right_child);
+
           }
         }
+      } else {
+        //printf("non-empty intersection, skipping over dat shit.\n");
       }
     }
   }
@@ -152,57 +183,91 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 
   /* NEXT STEP: */
   /* recursively print out the plan */
-  printf("if (");
+
   print_plan(plans, num_subsets - 1);
-  printf(") {\n");
 
-  printf("------------------------------------------------------------------------------------------\n");
-  printf("cost: %f\n", plans[num_subsets - 1].best_cost);
-  printf("==========================================================================================\n");
-
-  printf("\n\n\n");
   return plans[num_subsets - 1].best_cost;
 }
 
-
 void print_plan(struct subset_state plans[], int curr_subset)
 {
-  /* TODO: wrap the inner printing with an if-statement */
-  print_plan_loop(plans, curr_subset);
+  /* no children is a special print case. */
+  if (is_leaf(plans, curr_subset)) {
+    if (plans[curr_subset].no_branch) {
+      printf("/* no branch option */\n");
+      printf("answer[j] = i;\n");
+      printf("j += ");
+      print_logical_term(curr_subset);
+      printf("\n");
+    } else {
+      printf("if (");
+      print_logical_term(curr_subset);      
+      printf(") {\n");
+      printf("\tanswer[j++] = i;\n");
+      printf("}\n");
+    }
+  } else {
+
+
+
+    /* now handle the case with children. */
+    printf("if (");
+    print_plan_loop(plans, curr_subset);
+    /* printf(") {\n"); */
+  }
+  printf("------------------------------------------------------------------------------------------\n");
+  printf("cost: %f\n", plans[curr_subset].best_cost);
+  printf("==========================================================================================\n");
 }
 
-/* TODO: handle no-branch option. */
 void print_plan_loop(struct subset_state plans[], int curr_subset)
 {
-  /*printf("the current subset is %d\n", curr_subset);*/
+  /* printf("the current subset is %d\n", curr_subset);*/
+
   short left_child = plans[curr_subset].left_child;
 
-  /* handle left side */
-
+  /* handle left side*/
   if (left_child) {
-    /* recurse */
+    /* recurse*/
     print_plan_loop(plans, left_child);
     print_logical_term(left_child);
-
-    printf(" && "); /* join the two sides together */
   }
+  
 
-
-
-  /* handle right side. */
+  /* handle right side.*/
   short right_child = plans[curr_subset].right_child;
   if (right_child) {
-    /* recurse */
-    print_plan_loop(plans, right_child);
-    print_logical_term(right_child);
-  }
+    /* recurse*/
+    if(!is_leaf(plans, right_child)) {
+      printf(" && ");
+    }
 
+    print_plan_loop(plans, right_child);
+
+    if (is_leaf(plans, right_child)) {
+      /* finish the print.*/
+      if (plans[right_child].no_branch) {
+        printf(") {\n");
+        printf("\tanswer[j] += i;\n");
+        printf("\tj = ");
+        print_logical_term(right_child);
+        printf(";\n");
+        printf("}\n");
+      } else {
+        print_logical_term(right_child);
+        printf(" {\n");
+        printf("\tanswer[j++] = i;\n");
+        printf("}\n");
+      }
+    } 
+  }
 }
+
 
 void print_logical_term(short subset_bm)
 {
   printf("(");
-  int curr_bit = 0;
+  int curr_bit = 1;
   int needs_ampersand = 0;
 
   while (subset_bm) {
@@ -220,6 +285,13 @@ void print_logical_term(short subset_bm)
 
   printf(")");
 }
+
+int is_leaf(struct subset_state plans[], int curr_subset)
+{
+  return ((plans[curr_subset].left_child == 0) &&
+          (plans[curr_subset].right_child == 0));
+}
+
 
 
 /* returns -1 if s1->cmet < s2->cmet */
@@ -330,7 +402,7 @@ int lemma_four_nine(struct subset_state plans[],
 void init_subset_state(struct subset_state *ss)
 {
   ss->num_basic_terms = 0;
-  ss->sel_prod = 0;
+  ss->sel_prod = 1;
   ss->no_branch = 0;
   ss->best_cost = 0;
   ss->left_child = 0;
@@ -354,7 +426,6 @@ int build_set(short bm, float curr_sels[], float all_sels[])
 
 
 
-
 /* begin auxiliaries */
 
 float sum_array(int len, float values[])
@@ -373,10 +444,7 @@ float find_q(float p)
 }
 
 
-
-
 /* end auxiliaries; start cost fns. */
-
 
 
 
@@ -388,7 +456,8 @@ float fixed_cost_helper(int num_basic_terms,
 {
   return ((num_basic_terms * sc->r) +
           ((num_basic_terms - 1) * sc->l) +
-          sum_array(num_basic_terms, sels));
+          num_basic_terms * (sc->f));
+          /* sum_array(num_basic_terms, sels));*/
 }
 
 /* where sels is the current group of selectivities */
@@ -545,17 +614,17 @@ int main(int argc, char * argv[])
   num_runs = parse_query_file(argv[1], num_filters, selectivities); /* this will be the number of queries
                                                           we're optimizing */
   parse_config_file(argv[2], &sc);
-  printf("the number of runs is %d\n", num_runs);
-
 
 
   /* perform the actaul optimization. */
   int run_idx;
   /* TODO: UNCOMMENT THIS FOR FULL RUN */
-  /* for (run_idx = 0; run_idx < num_runs; run_idx++) { */
-  /*   compute_best_plan(num_filters[run_idx], &sc, selectivities[run_idx]); */
-  /* } */
-  compute_best_plan(num_filters[1], &sc, selectivities[1]);
+  printf("==========================================================================================\n");
+  /*for (run_idx = 0; run_idx < num_runs; run_idx++) {*/
+  for (run_idx = 0; run_idx < num_runs; run_idx++) {
+    compute_best_plan(num_filters[run_idx], &sc, selectivities[run_idx]);
+  }
 
+  /* compute_best_plan(num_filters[3], &sc, selectivities[3]);*/
   return 0;
 }

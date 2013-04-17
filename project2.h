@@ -4,7 +4,7 @@
 #define IN_BUFSIZE 1024 /* for reading lines from query and config
                            files. */
 #define MAX_FILTERS 10 /* according to instructions */ 
-#define MAX_RUNS 25 /* corresponds with lines in query file. */
+#define MAX_RUNS 100 /* corresponds with lines in query file. */
 #define SENTINEL -99.0
 
 /* the configuration for the machine.  the terms' names correspond with
@@ -73,6 +73,8 @@ int compare_cmetric(struct subset_state *,
                      struct subset_state *);
 int compare_dmetric(struct subset_state *,
                      struct subset_state *);
+int is_leaf(struct subset_state [], int);
+
 
 /* parsing functions */
 int parse_query_file(char *, int [], float[][MAX_FILTERS]);
