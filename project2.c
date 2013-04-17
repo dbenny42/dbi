@@ -14,7 +14,7 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 {
   int i;
   for (i = 0; i < num_basic_terms; i++) {
-    printf("%.2f ", all_sels[i]);
+    printf("%.5f ", all_sels[i]);
   }
   printf("\n");
   printf("------------------------------------------------------------------------------------------\n");
@@ -191,7 +191,6 @@ void print_plan_loop(struct subset_state plans[], int curr_subset, int curr_pare
   if(!is_leaf(plans, right_child)) {
     printf(" && ");
     short right_grandchild = plans[right_child].right_child;
-    short left_grandchild = plans[right_child].left_child;
     if ((!is_leaf(plans, right_grandchild)) ||  /*next cond assumes IS leaf */
         (!plans[right_grandchild].no_branch)) {
       printf("(");

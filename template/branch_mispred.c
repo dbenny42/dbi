@@ -149,9 +149,11 @@ int main(int argc, char * argv[]) {
     /* if(t1[o1[i]] && (t2[o2[i]] && (t3[o3[i]] && t4[o4[i]]))) { */
     /*   answer[j++] = i; */
     /* } */
-    if (t1[o1[i]] && (t3[o3[i]] && (t2[o2[i]] && t4[o4[i]]))) {
-      answer[j++] = i;
+    if ((t3[o3[i]] & t4[o4[i]])) {
+      answer[j] += i;
+      j = (t1[o1[i]] & t2[o2[i]]);
     }
+
   }
 
   // Read the counter
