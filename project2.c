@@ -20,10 +20,10 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 {
   int i;
   for (i = 0; i < num_basic_terms; i++) {
-    printf("%.2f ", all_sels[i]);
+    //("%.2f ", all_sels[i]);
   }
-  printf("\n");
-  printf("------------------------------------------------------------------------------------------\n");
+  //("\n");
+  //("------------------------------------------------------------------------------------------\n");
 
 
 
@@ -114,7 +114,7 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
 
 
     
-  //printf("\n\nNOW ENTERING STAGE 2\n\n");
+  //("\n\nNOW ENTERING STAGE 2\n\n");
   /***************************************************
    ** Stage 2
    ***************************************************/
@@ -122,8 +122,8 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
   short s2_idx;
   for (s1_idx = 1; s1_idx < num_subsets; s1_idx++) {
     //printf("s1_idx is now set at %d\n", s1_idx);
-    /*for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) {*/
-    for (s2_idx = s1_idx + 1; s2_idx < num_subsets; s2_idx++) {
+    for (s2_idx = 1; s2_idx < num_subsets; s2_idx++) {
+    /*for (s2_idx = s1_idx + 1; s2_idx < num_subsets; s2_idx++) {*/
       //printf("s2_idx is now set at %d\n", s2_idx);
       /* continue only if the intersection is empty */
       if ((s2_idx & s1_idx) == 0) {
@@ -134,7 +134,7 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
         } else if (lemma_four_nine(plans, &plans[s1_idx], &plans[s2_idx])) {
           /* do nothing */
           //printf("lemma 4-9 applies.\n");
-        } else {
+        } /*else { */
           /* calculate cost according to eq. 1 -> c*/
           /*fcost(s') + mq + pC*/
           float new_cost = ((plans[s2_idx].fixed_cost) +
@@ -152,9 +152,11 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
           short s1_union_s2 = s1_idx | s2_idx;
           //printf("the union of s1_idx and s2_idx is %d\n", s1_union_s2);
 
+
           if (new_cost < plans[s1_union_s2].best_cost) {
             //printf("NEW COST IS BETTER!\n");
-            //printf("s1_union_s2 is %d\n", s1_union_s2);
+            //("s1_union_s2 is %d\n", s1_union_s2);
+            //("old cost: %f\n", plans[s1_union_s2].best_cost);
             //printf("s1_idx is %d\n", s1_idx);
             //printf("s2_idx is %d\n", s2_idx);
 
@@ -165,11 +167,11 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
             /* replace A[s' U s].R with s. */
             plans[s1_union_s2].right_child = s1_idx;
 
-            //printf("s1_union_s2's cost is %f\n", plans[s1_union_s2].best_cost);
-            //printf("s1_union_s2's left is %d\n", plans[s1_union_s2].left_child);
-            //printf("s1_union_s2's right is %d\n", plans[s1_union_s2].right_child);
+            //("s1_union_s2's cost is %f\n", plans[s1_union_s2].best_cost);
+            //("s1_union_s2's left is %d\n", plans[s1_union_s2].left_child);
+            //("s1_union_s2's right is %d\n", plans[s1_union_s2].right_child);
 
-          }
+            /*}*/ 
         }
       } else {
         //printf("non-empty intersection, skipping over dat shit.\n");
@@ -625,6 +627,6 @@ int main(int argc, char * argv[])
     compute_best_plan(num_filters[run_idx], &sc, selectivities[run_idx]);
   }
 
-  /* compute_best_plan(num_filters[3], &sc, selectivities[3]);*/
+  /*compute_best_plan(num_filters[2], &sc, selectivities[2]);*/
   return 0;
 }
