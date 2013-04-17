@@ -56,18 +56,30 @@ ASSUMPTIONS:
 
 THINGS THAT HAVE BEEN TESTED:
 
+Commands:
+'./stage2.sh query.txt config.txt'
+'./stage2.sh query.txt config2.txt'
+
+...and examined the output to see if it looked reasonable.
+
+Some examples of things we tested:
+
 - Time complexity appears to be correct; using a test that printed a line
   for every iteration of part 2 of the algorithm, we found O(4^n) to be an
   excellent estimation of the time complexity (~number of lines our test
   printed).
 
 - Tested sample_query.txt as input, it produced output nearly identical to
-  sample_output.txt All costs are correct; only difference is a redundant
-  pair of parens on the last &-term in the if-statement.
+  sample_output.txt. All costs are correct, as are the actual optimized
+  execution plans.
 
+- Tested with a very high no-branch cost -> increase 'a' in config greatly.
+  config2.txt does this.  The hope is that &-terms will be chosen instead
+  of the no-branching option.  A couple of the earliest tests in query.txt
+  observe this phenomenon when switching from config.txt to config2.txt.
 
-TODO: test with a very high no-branch cost -> increase a greatly.
-      my_config.txt does this, and the output isn't printed very well.
-      --> this looks like an issue with the last leaf not being chosen as
-          a no-branch.  We just need to move where we print out those
-          extra parens.
+- Tested filters with very low selectivity in the hopes of observing &&
+  conditions being created.
+
+- Tested filters with a mix of moderate selectivities, in the hopes of
+  observing a fully mixed plan, with &&, &, and no-branch.
