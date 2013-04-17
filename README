@@ -6,12 +6,68 @@ David Benedetto djb2167
 Shimao Zheng sz2376
 
 
+Please find the following files included, in addition to this README:
+
+project2.h
+project2.c
+Makefile
+query.txt       # set of test queries. 
+config.txt      # configuration we used during one set of testing.
+config2.txt     # config for a second set of tests.
+output.txt      # output based on run with query.txt and config.txt
+output2.txt     # output based on run with query.txt and config2.txt
+stage2.sh
+
+
+
+TO RUN OUR CODE:
+
+from the command line, run:
+
+'./stage2.sh <query_file> <config_file>'
+
+where <query_file> is query.txt, unless you supply your own query file,
+and <config_file> is either config.txt or config2.txt, unless you supply
+your own config file.
+
+stage2.sh will check if 'make' has been typed, and builds the executable
+'selconds' if it has not yet been built.  If you wish to type 'make'
+before running the stage2.sh command, that will work, too.
+
+
+
+ASSUMPTIONS:
+- the query files and config files are formatted exactly as in the project
+  assignment.  We do not handle poorly- or ill-formed query or config
+  files, and running with a bad query or config file will cause
+  indeterminate results (though testing indicates segfaults, so please use
+  good files)
+
+- a query file contains no more than 1000 queries (lines).  To make memory
+  management easier, we statically allocate 1000-query max, based on the
+  value of MAX_RUNS defined in project.h.
+
+- a query contains no more than 15 filters.  We statically allocate a
+  maximum of 15 filters in project.h to make memory management
+  considerably easier.  We have tested our optimizer with as many as 9
+  filters, though it should work with up to 15.
+
 
 
 THINGS THAT HAVE BEEN TESTED:
 
 - Time complexity appears to be correct; using a test that printed a line
   for every iteration of part 2 of the algorithm, we found O(4^n) to be an
-  excellent estimation of the time complexity.
+  excellent estimation of the time complexity (~number of lines our test
+  printed).
 
-- 
+- Tested sample_query.txt as input, it produced output nearly identical to
+  sample_output.txt All costs are correct; only difference is a redundant
+  pair of parens on the last &-term in the if-statement.
+
+
+TODO: test with a very high no-branch cost -> increase a greatly.
+      my_config.txt does this, and the output isn't printed very well.
+      --> this looks like an issue with the last leaf not being chosen as
+          a no-branch.  We just need to move where we print out those
+          extra parens.

@@ -3,8 +3,8 @@
 
 #define IN_BUFSIZE 1024 /* for reading lines from query and config
                            files. */
-#define MAX_FILTERS 10 /* according to instructions */ 
-#define MAX_RUNS 100 /* corresponds with lines in query file. */
+#define MAX_FILTERS 15 /* according to instructions */
+#define MAX_RUNS 1000 /* corresponds with lines in query file. */
 #define SENTINEL -99.0
 
 /* the configuration for the machine.  the terms' names correspond with
