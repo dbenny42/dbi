@@ -148,7 +148,7 @@ void print_plan(struct subset_state plans[], int curr_subset)
       printf("answer[j] = i;\n");
       printf("j += ");
       print_logical_term(plans, curr_subset);
-      printf("\n");
+      printf(";\n");
     } else {
       printf("if (");
       print_logical_term(plans, curr_subset);
@@ -179,53 +179,54 @@ void print_plan_loop(struct subset_state plans[], int curr_subset, int curr_pare
   /* handle left side*/
   if (left_child) {
     /* recurse*/
-    print_plan_loop(plans, left_child, curr_parens);
     print_logical_term(plans, left_child);
-
   }
   
 
   /* handle right side.*/
+  /* we don't need to check if the right side is valid, because we're
+     guaranteed to have it */
   short right_child = plans[curr_subset].right_child;
-  if (right_child) {
-    /* recurse*/
-    if(!is_leaf(plans, right_child)) {
-      printf(" && ");
-
-      if (plans[curr_subset].num_basic_terms > 1) {
-        printf("(");
-        curr_parens++;
-      }
+  /* recurse*/
+  if(!is_leaf(plans, right_child)) {
+    printf(" && ");
+    short right_grandchild = plans[right_child].right_child;
+    short left_grandchild = plans[right_child].left_child;
+    if ((!is_leaf(plans, right_grandchild)) ||  /*next cond assumes IS leaf */
+        (!plans[right_grandchild].no_branch)) {
+      printf("(");
+      curr_parens++;
     }
-
     print_plan_loop(plans, right_child, curr_parens);
-    if (is_leaf(plans, right_child)) {
-      /* finish the print.*/
+  } else {
+    /* is leaf */
 
-      if (plans[right_child].no_branch) {
-        while (curr_parens > 0) {
-          printf(")");
-          curr_parens--;
-        }
+    /* this is the last function call, then.  we have enough info to
+       finish the print. */
 
-        printf(") {\n");
-        printf("\tanswer[j] += i;\n");
-        printf("\tj = ");
-        print_logical_term(plans, right_child);
-        printf(";\n");
-        printf("}\n");
-      } else {
-        printf(" && ");
-        print_logical_term(plans, right_child);
-        while (curr_parens > 0) {
-          printf(")");
-          curr_parens--;
-        }
-
-        printf(") {\n");
-        printf("\tanswer[j++] = i;\n");
-        printf("}\n");
+    if (plans[right_child].no_branch) {
+      while (curr_parens > 0) {
+        printf(")");
+        curr_parens--;
       }
+
+      printf(") {\n");
+      printf("\tanswer[j] += i;\n");
+      printf("\tj = ");
+      print_logical_term(plans, right_child);
+      printf(";\n");
+      printf("}\n");
+    } else {
+      printf(" && ");
+      print_logical_term(plans, right_child);
+      while (curr_parens > 0) {
+        printf(")");
+        curr_parens--;
+      }
+
+      printf(") {\n");
+      printf("\tanswer[j++] = i;\n");
+      printf("}\n");
     }
   }
 }
@@ -259,12 +260,13 @@ void print_logical_term(struct subset_state plans[], short subset_bm)
   }
 }
 
+
+
 int is_leaf(struct subset_state plans[], int curr_subset)
 {
   return ((plans[curr_subset].left_child == 0) &&
           (plans[curr_subset].right_child == 0));
 }
-
 
 
 /* returns -1 if s1->cmet < s2->cmet */
