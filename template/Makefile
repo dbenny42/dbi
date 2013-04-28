@@ -2,6 +2,7 @@
 # Simple make file to build the executable
 
 TARGETS = branch_mispred
+NEW_SOURCE = branch_mispred0.c branch_mispred1.c branch_mispred2.c branch_mispred3.c branch_mispred4.c branch_mispred5.c branch_mispred6.c
 CC=gcc
 CFLAGS = -g -Wall -O3 -save-temps
 INCLUDE = -I/lib/modules/`uname -r`/build/include
@@ -14,4 +15,4 @@ branch_mispred: branch_mispred.o
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o  $*.o $<
 clean:
-	rm -f *.o *~ $(TARGETS)
+	rm -f *.o *~ *.i *.s $(TARGETS) $(NEW_SOURCE)

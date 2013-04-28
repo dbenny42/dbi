@@ -17,7 +17,7 @@ float compute_best_plan(int num_basic_terms, struct sel_conf *sc, float all_sels
     printf("%.5f ", all_sels[i]);
   }
   printf("\n");
-  printf("------------------------------------------------------------------------------------------\n");
+  printf("------------------------------------------------------------------------------------------s\n");
 
   /* the low-order 9 bits (at most) of the subset_bm are used to
      indicate which basic terms are a part of a plan (of some size) stored
@@ -165,7 +165,7 @@ void print_plan(struct subset_state plans[], int curr_subset)
  
 
   /* wrap up. */
-  printf("------------------------------------------------------------------------------------------\n");
+  printf("------------------------------------------------------------------------------------------p\n");
   printf("cost: %f\n", plans[curr_subset].best_cost);
   printf("==========================================================================================\n");
 }
