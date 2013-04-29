@@ -146,9 +146,9 @@ int main(int argc, char * argv[]) {
 
   for(i = 0; i < LOOP; i++) {
     /* DJB2167 START */ 
-    if (t4[o4[i]] && (t3[o3[i]] && (t2[o2[i]] && t1[o1[i]]))) {
-      answer[j++] = i;
-    }
+if (t4[o4[i]] && (t3[o3[i]] && (t2[o2[i]] && t1[o1[i]]))) {
+	answer[j++] = i;
+}
     /* DJB2167 STOP */ 
   }
 
